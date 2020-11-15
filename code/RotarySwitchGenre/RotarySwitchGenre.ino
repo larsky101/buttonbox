@@ -39,7 +39,7 @@ void setup() {
   Serial.begin(115200);
   
   Serial.println();
-  Serial.println(F("Initializing Analog Read on Pin ... (May take 3~5 seconds)"));
+  Serial.println(F("Initializing Analog Read on Pin A1... (May take 3~5 seconds)"));
   
 }
 
