@@ -3,4 +3,4 @@
 
 ### Current Status Image
 
-![Button Box Preview](20201117_094222.jpg)
+![Button Box Preview](20201122_225459.jpg)
