@@ -31,6 +31,8 @@ int ledPinCount = 7;
 // debounce variables
 unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 15;
+unsigned long lastDebounceTimeGen = 0;
+unsigned long debounceDelayGen = 50;
   
 void setup() {  
    
@@ -84,32 +86,38 @@ void loop() {
 
   // check the mode to get the folder
   buttonVal = digitalRead(modePin);
-  //genreSensorValue = analogRead(genrePin);
+  genreSensorValue = analogRead(genrePin);
 
-  if (abs(genreSensorValue - oldAI) > 50)// see if the value has changed?
-  {
-    oldAI = genreSensorValue;
-    genre = genreSensorValue/146;
-
-    Serial.println("*****************************");
-    Serial.println(genre);
-    Serial.println("*****************************");
-
-    if (playerState != 0) {
-      myDFPlayer.playFolder(genre+1,track+1);
-    }
-
-    // Update the indicator LED
-    for (int i=0; i<= ledPinCount; i++) {
-        mcp.digitalWrite(i, LOW);
-    }
-    mcp.digitalWrite(genre, HIGH);
+  if (abs(genreSensorValue - lastGenreSensorValue) > 0){
+    lastDebounceTimeGen = millis();
   }
-  //Serial.println(genreSensorValue);
 
+  if ((millis() - lastDebounceTimeGen) > debounceDelayGen) {
+
+    if (abs(genreSensorValue - oldAI) > 50)// see if the value has changed?
+    {
+      oldAI = genreSensorValue;
+      genre = (genreSensorValue/146)+1;
+  
+      Serial.println("*****************************");
+      Serial.println(genre);
+      Serial.println("*****************************");
+  
+      if (playerState != 0) {
+        myDFPlayer.playFolder(genre,track);
+      }
+  
+      // Update the indicator LED
+      for (int i=0; i<= ledPinCount; i++) {
+          mcp.digitalWrite(i, LOW);
+      }
+      mcp.digitalWrite(genre, HIGH);
+    }
+    //Serial.println(genreSensorValue);
+  }
   // Check the buttons to get the track
   trackSensorValue = analogRead(trackPin);
-  Serial.println(trackSensorValue);
+  //Serial.println(trackSensorValue);
   if (abs(trackSensorValue - lastTrackSensorValue) > 5){
     lastDebounceTime = millis();
   }
@@ -131,9 +139,9 @@ void loop() {
     //Serial.println(sensorValue);
     if (track != buttonPress && buttonPress >=0) {
       track = buttonPress;
-      myDFPlayer.playFolder(5,track);
+      myDFPlayer.playFolder(genre,track);
       Serial.print("Sending Command: PlayFolder(");
-      Serial.print("6");
+      Serial.print(genre);
       Serial.print(", ");
       Serial.print(track);
       Serial.println(")");
@@ -141,6 +149,7 @@ void loop() {
     }
   }
 
+  lastGenreSensorValue = genreSensorValue;
   lastTrackSensorValue = trackSensorValue;
 
 /*
