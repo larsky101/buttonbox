@@ -21,12 +21,16 @@ Adafruit_MCP23008 mcp;
 SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
 DFRobotDFPlayerMini myDFPlayer;
 void printDetail(uint8_t type, int value);
-int dt = 250;
+int dt = 50;
 int modePin = 33; // debugging button
 int genrePin = A0;
 int trackPin = A1;
 int mcpLED[] = {0, 1, 2, 3, 4, 5, 6, 7};
 int ledPinCount = 7;
+
+// debounce variables
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 15;
   
 void setup() {  
    
@@ -37,9 +41,8 @@ void setup() {
   for (int i=0; i<= ledPinCount; i++) {
     mcp.pinMode(i, OUTPUT);
     mcp.digitalWrite(i, HIGH);
-    delay(1000);
+    //delay(1000);
     mcp.digitalWrite(i, LOW);
-    delay(1000);
   }
 
   // Debugging button
@@ -71,19 +74,22 @@ void loop() {
 
   static int buttonVal = LOW;
   static int playerState = 0;
-  static int sensorValue = 0;
+  static int genreSensorValue = 0;
+  static int trackSensorValue = 0;
+  static int lastGenreSensorValue = 0;
+  static int lastTrackSensorValue = 0;
   static int oldAI = 0;
-  static int genre = 0;
+  static int genre = 4;
   static int track = 0;
 
   // check the mode to get the folder
   buttonVal = digitalRead(modePin);
-  sensorValue = analogRead(genrePin);
+  //genreSensorValue = analogRead(genrePin);
 
-  if ((sensorValue > (oldAI + 50)) || (sensorValue < (oldAI - 50)))// see if the value has changed?
+  if (abs(genreSensorValue - oldAI) > 50)// see if the value has changed?
   {
-    oldAI = sensorValue;
-    genre = sensorValue/146;
+    oldAI = genreSensorValue;
+    genre = genreSensorValue/146;
 
     Serial.println("*****************************");
     Serial.println(genre);
@@ -99,30 +105,43 @@ void loop() {
     }
     mcp.digitalWrite(genre, HIGH);
   }
-  //Serial.println(sensorValue);
+  //Serial.println(genreSensorValue);
 
   // Check the buttons to get the track
-  sensorValue = analogRead(trackPin);
-  String buttonPress = "none";
- 
-  int j = 0;
-  if(sensorValue == 0) {
-    buttonPress = "none";
+  trackSensorValue = analogRead(trackPin);
+  Serial.println(trackSensorValue);
+  if (abs(trackSensorValue - lastTrackSensorValue) > 5){
+    lastDebounceTime = millis();
   }
-  else {
-    while (1024/pow(2,j) > sensorValue) {
-      j++;
+  
+  int buttonPress = -1;
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    int j = 0;
+    if(trackSensorValue < 5) {
+      buttonPress = -1;
     }
-    //Serial.print("1024/2^j = ");
-    //Serial.println(1024/pow(2,j));
-    buttonPress = j-1;
+    else {
+      while (1024/pow(2,j) > trackSensorValue) {
+        j++;
+      }
+      //Serial.print("1024/2^j = ");
+      //Serial.println(1024/pow(2,j));
+      buttonPress = j-1;
+    }
+    //Serial.println(sensorValue);
+    if (track != buttonPress && buttonPress >=0) {
+      track = buttonPress;
+      myDFPlayer.playFolder(5,track);
+      Serial.print("Sending Command: PlayFolder(");
+      Serial.print("6");
+      Serial.print(", ");
+      Serial.print(track);
+      Serial.println(")");
+      playerState = 1;
+    }
   }
-  Serial.println(sensorValue);
-  if (track != j) {
-    track = j;
-    myDFPlayer.playFolder(genre+1,track+1);
-    playerState = 1;
-  }
+
+  lastTrackSensorValue = trackSensorValue;
 
 /*
   if (buttonVal == HIGH) {

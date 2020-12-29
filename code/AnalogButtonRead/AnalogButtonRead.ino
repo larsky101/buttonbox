@@ -20,7 +20,7 @@ void loop() {
   // read the value from the sensor:
 
   sensorValue = analogRead(sensorPin);
-  String buttonPress = "none";
+  String buttonPress = "0";
  
   int j = 0;
   if(sensorValue == 0) {
@@ -34,7 +34,7 @@ void loop() {
     //Serial.println(1024/pow(2,j));
     buttonPress = j-1;
   }
-  Serial.println(buttonPress);
+  Serial.println(sensorValue);
   // turn the ledPin on
   //digitalWrite(ledPin, HIGH);
 
