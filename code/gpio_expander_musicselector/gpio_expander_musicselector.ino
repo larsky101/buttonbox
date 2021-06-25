@@ -32,7 +32,7 @@ int ledPinCount = 7;
 unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 15;
 unsigned long lastDebounceTimeGen = 0;
-unsigned long debounceDelayGen = 50;
+unsigned long debounceDelayGen = 150;
   
 void setup() {  
    
