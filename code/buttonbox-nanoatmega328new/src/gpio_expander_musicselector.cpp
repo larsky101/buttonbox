@@ -31,7 +31,7 @@ int ledPinCount = 7;
 unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 15;
 unsigned long lastDebounceTimeGen = 0;
-unsigned long debounceDelayGen = 150;
+unsigned long debounceDelayGen = 15;
   
 void setup() {  
    
@@ -96,7 +96,7 @@ void loop() {
     if (abs(genreSensorValue - oldAI) > 50)// see if the value has changed?
     {
       oldAI = genreSensorValue;
-      genre = (genreSensorValue/146)+1;
+      genre = (genreSensorValue/160)+1;
   
       Serial.println("*****************************");
       Serial.println(genre);
@@ -110,9 +110,9 @@ void loop() {
       for (int i=0; i<= ledPinCount; i++) {
           mcp.digitalWrite(i, LOW);
       }
-      mcp.digitalWrite(genre, HIGH);
+      mcp.digitalWrite(genre-1, HIGH); // these pins are zero-indexed
     }
-    //Serial.println(genreSensorValue);
+    Serial.println(genreSensorValue);
   }
   // Check the buttons to get the track
   trackSensorValue = analogRead(trackPin);
@@ -123,19 +123,23 @@ void loop() {
   
   int buttonPress = -1;
   if ((millis() - lastDebounceTime) > debounceDelay) {
-    int j = 0;
+    int j = 6;
     if(trackSensorValue < 5) {
       buttonPress = -1;
     }
     else {
-      while (1024/pow(2,j) > trackSensorValue) {
-        j++;
+      while (1024/pow(2,j) <= (trackSensorValue - 2)) {  // add +2 to increase analog tolerance
+        j--;
       }
-      //Serial.print("1024/2^j = ");
-      //Serial.println(1024/pow(2,j));
-      buttonPress = j-1;
+      Serial.print("trackSensorValue = ");
+      Serial.print(trackSensorValue);
+      Serial.print(" | j = ");
+      Serial.print(j);
+      Serial.print(" | track: ");
+      Serial.println(j);
+      buttonPress = j;
     }
-    //Serial.println(sensorValue);
+    //Serial.println(trackSensorValue);
     if (track != buttonPress && buttonPress >=0) {
       track = buttonPress;
       myDFPlayer.playFolder(genre,track);
@@ -151,23 +155,6 @@ void loop() {
   lastGenreSensorValue = genreSensorValue;
   lastTrackSensorValue = trackSensorValue;
 
-/*
-  if (buttonVal == HIGH) {
-    if (playerState == 0) {
-      myDFPlayer.playFolder(2,3);  //play specific mp3 in SD:/2/003.mp3; Folder Name(1~99); File Name(1~255)
-      Serial.println("Button State: HIGH");
-      Serial.println("Beginning to play");
-      playerState = 1;
-      lightTimer = millis();
-    }
-    else {
-      myDFPlayer.stop();  //stop playback
-      Serial.println("Button State: HIGH");
-      Serial.println("Time to Stop");
-      playerState = 0;
-      
-    }
-  }*/
   if (myDFPlayer.available()) {
     uint8_t type = myDFPlayer.readType();
     int value =  myDFPlayer.read();
