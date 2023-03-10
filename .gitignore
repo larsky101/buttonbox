@@ -34,5 +34,5 @@
 *.app
 
 # Freecad lockfile
-.FCStd1
+*.FCStd1
 
